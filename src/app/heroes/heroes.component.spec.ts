@@ -1,45 +1,69 @@
-import { HeroesComponent } from './heroes.component';
-import { of } from 'rxjs/internal/observable/of';
+import { Component, Input, NO_ERRORS_SCHEMA } from "@angular/core"
+import { ComponentFixture, TestBed } from "@angular/core/testing"
+import { By } from "@angular/platform-browser"
+import { of } from "rxjs"
+import { Hero } from "../hero"
+import { HeroService } from "../hero.service"
+import { HeroesComponent } from "./heroes.component"
 
-describe('HeroComponent',() => {
-    let component: HeroesComponent
+describe('Heroes component (shallow tests)',() => {
+    let fixture: ComponentFixture<HeroesComponent>
+    let mockHeroService;
     let HEROES;
-    let mockService;
+
+    @Component({
+        selector: 'app-hero',
+        template: '<div></div>',       
+      })
+    class FakeHeroComponent {
+        @Input() hero: Hero;
+        // @Output() delete = new EventEmitter();    
+      }
 
     beforeEach(() => {
+
         HEROES = [
-            {id:1, name: 'SpiderDude',strength: 8},
-            {id:2, name: 'Wonderful woman',strength: 24},
-            {id:3, name: 'SuperDude',strength: 55},
+            {id:1, name:'SpiderDude', strength: 8},
+            {id:2, name:'Wonderful Woman', strength: 24},
+            {id:2, name:'SuperDude', strength: 55},
         ]
 
-        mockService = jasmine.createSpyObj(['getHeroes','addHero','deleteHero'])
+        mockHeroService = jasmine.createSpyObj(['getHeroes','addHero', 'deleteHero']);
 
-        component = new HeroesComponent(mockService)
-    })
 
-    describe('delete',() => {
+        TestBed.configureTestingModule({
+            declarations: [ 
+                HeroesComponent,
+                FakeHeroComponent
+             ],
+            providers: [ 
+                {
+                    provide: HeroService, useValue: mockHeroService
+                }
 
-        it('should remove the indicated hero from the heroes list',() => {
-            mockService.deleteHero.and.returnValue(of(true))
-
-            component.heroes = HEROES;
-
-            component.delete(HEROES[2])
-
-            expect(component.heroes.length).toBe(2)            
+             ],
+            // schemas: [NO_ERRORS_SCHEMA]
         })
 
-        it('should call deleteHero',() => {
-
-            mockService.deleteHero.and.returnValue(of(true))
-            component.heroes = HEROES;
-
-            component.delete(HEROES[2])
-
-            expect(mockService.deleteHero).toHaveBeenCalledWith(HEROES[2]);
-            // test when call it self
-
-        })
+        fixture = TestBed.createComponent(HeroesComponent)
     })
+    
+    it('sholud set hero correctly from the service', () => {
+        mockHeroService.getHeroes.and.returnValue(of(HEROES))
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.heroes.length).toEqual(3)
+    })
+
+    it('should create on li for each hero', () => {
+        mockHeroService.getHeroes.and.returnValue(of(HEROES))
+        fixture.detectChanges();
+        expect(
+            fixture.debugElement.queryAll(By.css(('li'))).length
+        ).toBe(3)
+    })
+
+
+
+
 })
